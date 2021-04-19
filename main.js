@@ -1,3 +1,8 @@
-console.log('je suis le main');
+let server = require ('./server');
 
-var server = require ('./server');
+let drive = require ('./drive');
+
+
+drive.createRootFolder().then(() => {
+    server.start();
+});

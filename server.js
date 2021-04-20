@@ -1,8 +1,10 @@
 // Appel du module express
 let express = require('express');
+let isAlphanumeric = require('is-alphanumeric');
 
 let fs = require('fs');
-const { readFolder } = require('./drive');
+const { readOtherFolder, ROOT } = require('./drive');
+
 const drive = require('./drive');
 
 
@@ -11,7 +13,7 @@ const app = express();
 
 let port = 3000;
 
-function start(){
+function start() {
     console.log('serveur lancé');
     app.listen(port, () => {
         console.log(`Example app listening at http://localhost:${port}`)
@@ -32,38 +34,59 @@ app.get('/', (req, res) => {
 // Retourne une liste contenant les dossiers et fichiers à la racine du “drive”
 app.get('/api/drive', function (req, res) {
     const readFolderPromise = drive.readFolder();
-    readFolderPromise.then((filesAndFolders) =>{
+    readFolderPromise.then((filesAndFolders) => {
         res.send(filesAndFolders);
     })
 
-})
+});
 
 
 
-// Retourne le contenu de {name} / (req.params.name) récupère ce qu'il y a dans {name}
-app.get('/api/drive/:name', function (req, res){
-    res.status(200).json(
+// Retourne le contenu de {name} / (req.params.name récupère ce qu'il y a dans {name})
+app.get('/api/drive/:name', function (req, res) {
+    let name = req.params.name;
+    const readOtherFolderPromise = drive.readOtherFolder(name);
+    readOtherFolderPromise.then((filesAndFolders) => {
+        res.send(filesAndFolders);
+    }).catch((error) => {
+        res.status(404).send(error.message);
+    });
+});
 
-        fs.stat('/api/drive/:name', (err, stats) => {
-            console.log(stats.isFile());
+
+
+// Créer un dossier avec le nom {name} / req.query.name récupère le nom du dossier saisi dans le front
+app.post('/api/drive', function (req, res) {
+    if (isAlphanumeric(req.query.name) == false) {
+        res.status(400).send("Veuillez saisir un nom de dossier valide");
+    } else {
+        const createFolderPromise = drive.createFolder(ROOT, req.query.name);
+        createFolderPromise.then((result) => {
+            res.status(201).send(result);
+
+        });
+    }
+});
+
+
+
+// Créer un dossier avec le nom {name} dans {folder}
+app.post('/api/drive/:name', function (req, res) {
+    if (isAlphanumeric(req.query.name) == false) {
+        res.status(400).send("Veuillez saisir un nom de dossier valide");
+    } else {
+        let nameCreateFolder = req.params.name;
+        const createFolderInFolderPromise = drive.createFolderInFolder(ROOT, nameCreateFolder, req.query.name);
+        createFolderInFolderPromise.then((result) => {
+            res.status(201).send(result);
         })
+    }
+});
 
-        [
-            {
-              name: "Autre dossier",
-              isFolder: true
-            }, {
-              name: "passeport",
-              size: 1003,
-              isFolder: false
-            }
-          ]
-    )
-})
 
 
 // Exports
 
 module.exports = {
-    start : start,
+    start: start,
 }

@@ -1,15 +1,24 @@
 // Appel du module express
-let express = require('express');
-let isAlphanumeric = require('is-alphanumeric');
+const express = require('express');
+const isAlphanumeric = require('is-alphanumeric');
+const busboy = require('express-busboy');
 
 let fs = require('fs');
 const { readOtherFolder, ROOT } = require('./drive');
 
 const drive = require('./drive');
+const { createInflate } = require('zlib');
 
 
 // La variable app prend pour valeur la fonction express du module express
 const app = express();
+
+// Ajoute des fonctions disponibles à express (pouvoir gérer plus de choses)
+busboy.extend(app, {
+    upload: true,
+    path: '/var/folders/dr/dmpx9gzj6mldd4tc11__2xl00000gn/T/',
+    allowedPath: /./
+});
 
 let port = 3000;
 
@@ -65,7 +74,7 @@ app.post('/api/drive', function (req, res) {
             res.status(201).send(result);
 
         });
-    }
+    };
 });
 
 
@@ -79,14 +88,47 @@ app.post('/api/drive/:name', function (req, res) {
         const createFolderInFolderPromise = drive.createFolderInFolder(ROOT, nameCreateFolder, req.query.name);
         createFolderInFolderPromise.then((result) => {
             res.status(201).send(result);
-        })
+        });
+    };
+});
+
+
+
+// Suppression d’un dossier ou d’un fichier avec le nom {name}
+app.delete('/api/drive/:name', function (req,res) {
+    let deleteFolder = req.params.name;
+    const deleteFolderPromise = drive.deleteFolder(ROOT, deleteFolder);
+    deleteFolderPromise.then((result) => {
+        res.status(201).send(result);
+    });
+});
+
+
+
+// Suppression d’un dossier ou d’un fichier avec le nom {name} dans {folder}
+app.delete('/api/drive/:name/:second', function (req,res) {
+    let deleteFolder = req.params.second;
+    const deleteFolderPromise = drive.deleteFolder(ROOT + '/' + req.params.name, deleteFolder);
+    
+    deleteFolderPromise.then((result) => {
+        res.status(201).send(result);
+    });
+});
+
+
+// Créer un fichier à la racine du “drive”
+app.put('/api/drive', function (req, res) {
+    console.log(req.files);
+    if (!req.files.file) {
+        res.status(400);
+    } else {
+        drive.moveFile(req.files.file.file, `${ROOT}${req.files.file.filename}`);
     }
 });
 
 
 
 // Exports
-
 module.exports = {
     start: start,
-}
+};

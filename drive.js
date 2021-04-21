@@ -9,7 +9,7 @@ const path = require('path');
 const { readFile } = require('fs');
 
 // La varible ROOT prend pour valeur le chemin dans lequel les fichiers du drive sont reliés
-const ROOT = path.join(os.tmpdir(), 'dossierCréé');
+const ROOT = path.join(os.tmpdir(), 'AlpsDrive/');
 console.log(ROOT);
 
 // Création d'un dossier 
@@ -54,7 +54,7 @@ function readFolder() {
 function readOtherFolder(name) {
     let index = 0;
     let filesAndFolders = [];
-    const promise = fs.readdir(ROOT + '/' + name, { withFileTypes: true })
+    const promise = fs.readdir(path.join(ROOT, name), { withFileTypes: true })
         .then((result) => {
             while (result.length > index) {
                 filesAndFolders.push({
@@ -67,7 +67,7 @@ function readOtherFolder(name) {
         }).catch((error) => {
             console.log(error);
             if (error.code == 'ENOTDIR') {
-                return fs.readFile(ROOT + '/' + name, 'utf8');
+                return fs.readFile(path.join(ROOT, name));
             }
             if (error.code == 'ENOENT') {
 
@@ -81,30 +81,59 @@ function readOtherFolder(name) {
 
 
 // Créer un dossier dans le ROOT depuis le front
-function createFolder(ROOT, nomDossier){
+function createFolder(ROOT, nomDossier) {
     let promise = fs.mkdir(path.join(ROOT, nomDossier))
-    .then(() => {
-        console.log("dossier créé");
-    }).catch(() => {
-        console.log("Dossier pas créer");
+        .then(() => {
+            console.log("dossier créé");
+        }).catch(() => {
+            console.log("Dossier pas créer");
 
-    })
+        })
     return promise;
 };
 
 
 
 // Créer un dossier dans un dossier du ROOT depuis le front
-function createFolderInFolder(ROOT, nameFolder, nameNewFolder){
+function createFolderInFolder(ROOT, nameFolder, nameNewFolder) {
     let promise = fs.mkdir(path.join(ROOT, nameFolder, nameNewFolder))
-    .then(() => {
-        console.log("Dossier créé dans " + nameFolder);
-    }).catch((error) => {
-        console.log("Dossier dans dossier non créé");
-    });
+        .then(() => {
+            console.log("Dossier créé dans " + nameFolder);
+        }).catch(() => {
+            console.log("Dossier dans dossier non créé");
+        });
     return promise;
 };
 
+
+
+// Supprime un dossier du ROOT depuis le front
+function deleteFolder(ROOT, nameFolder) {
+    let promise = fs.rmdir(path.join(ROOT, nameFolder))
+        .then(() => {
+            console.log("Dossier supprimé")
+        }).catch((error) => {
+            console.log(error);
+        });
+    return promise;
+};
+
+
+
+// Déplace un fichier temporaire stocké dans T (Dossier du ROOT avant Alps_drive) dans le ROOT et supprime le dossier temporaire
+function moveFile(file, destination) {
+    const promise = fs.copyFile(file, destination)
+        .then((result) => {
+            fs.unlink(file)
+                .catch((error) => {
+                    console.log(error);
+                });
+        })
+        .catch((error) => {
+            console.log(error);
+        });
+    return promise;
+};
 
 
 // Exports
@@ -115,4 +144,6 @@ module.exports = {
     readOtherFolder: readOtherFolder,
     createFolder: createFolder,
     createFolderInFolder: createFolderInFolder,
+    deleteFolder: deleteFolder,
+    moveFile: moveFile,
 }

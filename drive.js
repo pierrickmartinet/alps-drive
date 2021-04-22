@@ -109,7 +109,7 @@ function createFolderInFolder(ROOT, nameFolder, nameNewFolder) {
 
 // Supprime un dossier du ROOT depuis le front
 function deleteFolder(ROOT, nameFolder) {
-    let promise = fs.rmdir(path.join(ROOT, nameFolder))
+    let promise = fs.rmdir(path.join(ROOT, nameFolder), {recursive: true})
         .then(() => {
             console.log("Dossier supprimé")
         }).catch((error) => {
@@ -134,6 +134,9 @@ function moveFile(file, destination) {
         });
     return promise;
 };
+
+
+//  Déplace un fichier temporaire stocké dans T (Dossier du ROOT avant Alps_drive) dans un folder de ROOT et supprime le dossier temporaire
 
 
 // Exports

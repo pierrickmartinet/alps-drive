@@ -1,7 +1,9 @@
 // Appel du module express
 const express = require('express');
+
 const isAlphanumeric = require('is-alphanumeric');
 const busboy = require('express-busboy');
+const path = require('path');
 
 let fs = require('fs');
 const { readOtherFolder, ROOT } = require('./drive');
@@ -116,14 +118,36 @@ app.delete('/api/drive/:name/:second', function (req,res) {
 });
 
 
+
 // Créer un fichier à la racine du “drive”
 app.put('/api/drive', function (req, res) {
     console.log(req.files);
+    let moveFile = drive.moveFile (req.files.file.file, `${ROOT}${req.files.file.filename}`);
     if (!req.files.file) {
         res.status(400);
     } else {
-        drive.moveFile(req.files.file.file, `${ROOT}${req.files.file.filename}`);
-    }
+        moveFile.then((result) => {
+            res.status(201).send(result);
+        })
+    };
+});
+
+
+
+// Créer un fichier dans {folder}
+app.put('/api/drive/:folder', function (req, res){
+
+    folder = path.join(ROOT, req.params.folder);
+    console.log(folder);
+    console.log(req.files.file.filename);
+    let moveFileFolder = drive.moveFile (req.files.file.file, `${folder}/${req.files.file.filename}`);
+    if (!req.files.file) {
+        res.status(400);
+    } else {
+        moveFileFolder.then((result) => {
+            res.status(201).send(result);
+        });
+    };
 });
 
 
